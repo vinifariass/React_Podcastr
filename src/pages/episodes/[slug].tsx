@@ -3,8 +3,11 @@ import { GetStaticPaths, GetStaticProps } from 'next'
 import ptBR from 'date-fns/locale/pt-BR'
 import { api } from '../../services/api'
 import Image from 'next/image'
+import Link from 'next/link'
 import { convertDurationToTimeString } from '../../utils/convertDurationToTimeString'
 import styles from './episode.module.scss'
+import  { useRouter } from 'next/router'
+import { browser } from 'node:process'
 
 
 type Episode = {
@@ -23,12 +26,21 @@ type EpisodeProps = {
   episode: Episode;
 }
 export default function Episode({ episode }: EpisodeProps) {
+  const router = useRouter()
+
+  if(router.isFallback) {
+    return <p>Carregando...</p>
+  }
+  
   return (
    <div className={styles.episode}>
      <div className={styles.thumbnailContainer}>
-       <button>
-        <img src="/arrow-left.svg" alt="Voltar"/>
-      </button>
+       <Link href="/">
+        <button>
+          <img src="/arrow-left.svg" alt="Voltar"/>
+        </button>
+       </Link>
+      
       <Image width={760}
         height={160}
         src={episode.thumbnail}
@@ -45,16 +57,33 @@ export default function Episode({ episode }: EpisodeProps) {
         <span>{episode.publishedAt}</span>
         <span>{episode.durationAsString}</span>
       </header>
-      <div className={styles.description}>
-        {episode.description}
-      </div>
+      <div className={styles.description} dangerouslySetInnerHTML = {{__html: episode.description}} />
    </div>
   )
 } 
 
+
+
 export const getStaticPaths: GetStaticPaths = async () => {
+  // buscar categorias mais acessadas
+  const {data} = await api.get('episodes', {
+    params: {
+      _limit: 2,
+      _sort: 'published_at',
+      _order: 'desc',
+    }
+  })
+
+  const paths = data.map(episode => {
+    return {
+      params: {
+        slug: episode.id
+      }
+    }
+  })
+
   return {
-    paths: [],
+    paths,
     fallback: 'blocking'
   }
 }
@@ -73,7 +102,7 @@ export const getStaticProps: GetStaticProps = async (ctx) => {
       duration: Number(data.file.duration),
       durationAsString: convertDurationToTimeString(Number(data.file.duration)),
       url: data.file.url,
-
+      description: data.description,
     }
 
   return {
