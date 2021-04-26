@@ -25,7 +25,7 @@
   footer {
     align-self: stretch;
 
-    &.empty{
+    &.empty .progress{
       opacity: 0.5;
     }
   }
@@ -109,6 +109,7 @@
 
     &:disabled {
       cursor: default;
+      opacity: 0.5;
     }
 
     &:hover:not(:disabled) {
@@ -121,7 +122,7 @@
       border-radius: 1rem;
       background: var(--purple-400);
 
-      &:hover {
+      &:hover:not(:disabled) {
         filter: brightness(0.95);
       }
 
